@@ -1,0 +1,5 @@
+flask
+cairosvg
+requests
+bs4
+pillow
