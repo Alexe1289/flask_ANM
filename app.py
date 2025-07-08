@@ -41,8 +41,8 @@ def get_page():
             print(f"width: {width}, height : {height}")
             # sending data
             def generate():
-                yield struct.pack(">I", width)
-                yield struct.pack(">I", height)
+                # yield struct.pack(">I", width)
+                # yield struct.pack(">I", height)
 
                 for y in range(height):
                     for x in range(width):
