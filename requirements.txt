@@ -4,3 +4,5 @@ requests
 bs4
 pillow
 gunicorn
+io
+struct
