@@ -48,7 +48,7 @@ def get_page():
                     for x in range(width):
                         r, g, b = pixels[x, y]
                         rgb565 = rgb888_to_rgb565(r, g, b)
-                        yield struct.pack(">H", 63488)
+                        yield struct.pack(">H", rgb565)
             
             return Response(generate(), mimetype='application/octet-stream')
         else:
