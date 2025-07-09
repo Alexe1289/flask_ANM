@@ -41,7 +41,6 @@ def get_page():
             print(f"width: {width}, height : {height}")
             # sending data
             def generate():
-                yield b'IMG'
                 yield struct.pack(">H", width)
                 yield struct.pack(">H", height)
 
@@ -49,7 +48,7 @@ def get_page():
                     for x in range(width):
                         r, g, b = pixels[x, y]
                         rgb565 = rgb888_to_rgb565(r, g, b)
-                        yield struct.pack(">H", rgb565)
+                        yield struct.pack(">H", 63488)
             
             return Response(generate(), mimetype='application/octet-stream')
         else:
