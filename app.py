@@ -41,7 +41,7 @@ def get_page():
             print(f"width: {width}, height : {height}")
             # sending data
             def generate():
-                CHUNK_SIZE = 4 * 1024  # 16 KB
+                CHUNK_SIZE = 1 * 1024  # 16 KB
                 buffer = bytearray()
                 buffer.extend(struct.pack(">H", width))
                 buffer.extend(struct.pack(">H", height))
