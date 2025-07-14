@@ -41,22 +41,14 @@ def get_page():
             print(f"width: {width}, height : {height}")
             # sending data
             def generate():
-                CHUNK_SIZE = 1 * 1024  # 16 KB
-                buffer = bytearray()
-                buffer.extend(struct.pack(">H", width))
-                buffer.extend(struct.pack(">H", height))
+                yield struct.pack(">H", width)
+                yield struct.pack(">H", height)
 
                 for y in range(height):
                     for x in range(width):
                         r, g, b = pixels[x, y]
                         rgb565 = rgb888_to_rgb565(r, g, b)
-                        buffer.extend(struct.pack(">H", rgb565))
-                        if len(buffer) >= CHUNK_SIZE:
-                            yield bytes(buffer)
-                            buffer.clear()
-                if buffer:
-                    yield bytes(buffer)
-
+                        yield struct.pack(">H", rgb565)
             
             return Response(generate(), mimetype='application/octet-stream')
         else:
