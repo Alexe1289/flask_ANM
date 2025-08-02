@@ -27,34 +27,35 @@ def get_page():
     soup = BeautifulSoup(avertizari, "html.parser")
 
     tag = soup.find("div", class_="meteo_mapavertiz")
-    if tag:
-        img = tag.find("img")
-        if img and img.has_attr("src"):
-            image_url = img["src"]
-            response = requests.get(image_url)
-            if response.status_code != 200:
-                return "NO IMAGE"
-            png_bytes = cairosvg.svg2png(bytestring=response.content)
-            img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
-            pixels = img.load()
-            width, height = img.size
-            print(f"width: {width}, height : {height}")
-            # sending data
-            def generate():
-                yield struct.pack(">H", width)
-                yield struct.pack(">H", height)
+    if not tag:
+        tag = soup.find("div", class_="avertizari")
+        if not tag:
+            return "Nu exista avertizari"
+    img = tag.find("img")
+    if img and img.has_attr("src"):
+        image_url = img["src"]
+        response = requests.get(image_url)
+        if response.status_code != 200:
+            return "NO IMAGE"
+        png_bytes = cairosvg.svg2png(bytestring=response.content)
+        img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+        pixels = img.load()
+        width, height = img.size
+        print(f"width: {width}, height : {height}")
+        # sending data
+        def generate():
+            yield struct.pack(">H", width)
+            yield struct.pack(">H", height)
 
-                for y in range(height):
-                    for x in range(width):
-                        r, g, b = pixels[x, y]
-                        rgb565 = rgb888_to_rgb565(r, g, b)
-                        yield struct.pack(">H", rgb565)
-            
-            return Response(generate(), mimetype='application/octet-stream')
-        else:
-            return "Nu exista imagine2"
+            for y in range(height):
+                for x in range(width):
+                    r, g, b = pixels[x, y]
+                    rgb565 = rgb888_to_rgb565(r, g, b)
+                    yield struct.pack(">H", rgb565)
+        
+        return Response(generate(), mimetype='application/octet-stream')
     else:
-        return "Nu exista imagine1"
+        return "Nu exista imagine2"
     # tags = soup.find_all("div", class_="meteo_mapavertiz")
     # for tag in tags:
     #     if tag:
