@@ -44,14 +44,18 @@ def get_page():
         print(f"width: {width}, height : {height}")
         # sending data
         def generate():
-            yield struct.pack(">H", width)
-            yield struct.pack(">H", height)
+            # yield struct.pack(">H", width)
+            # yield struct.pack(">H", height)
 
-            for y in range(height):
-                for x in range(width):
-                    r, g, b = pixels[x, y]
-                    rgb565 = rgb888_to_rgb565(r, g, b)
-                    yield struct.pack(">H", rgb565)
+            for i in range(100000):
+                print(f"Sending {i % 10}")
+                yield struct.pack(">B", i % 10)
+
+            # for y in range(height):
+            #     for x in range(width):
+            #         r, g, b = pixels[x, y]
+            #         rgb565 = rgb888_to_rgb565(r, g, b)
+            #         yield struct.pack(">H", rgb565)
         
         return Response(generate(), mimetype='application/octet-stream')
     else:
