@@ -146,7 +146,8 @@ def fetch_and_write_avertizari():
             f.write(struct.pack(">H", height))
             for pixel in pixels:
                 f.write(struct.pack(">H", pixel))
-        
+                
+fetch_and_write_avertizari()
 if __name__ == "__main__":
     fetch_and_write_avertizari()
     app.run(debug=True)
