@@ -2,6 +2,7 @@ import requests
 import cairosvg
 import io
 import struct
+import re
 from flask import Flask, send_file, Response
 from bs4 import BeautifulSoup
 from PIL import Image
@@ -10,12 +11,44 @@ app = Flask(__name__)
 url_avertizari = "https://www.meteoromania.ro/avertizari/"
 AVERTIZARI_FILE = "avertizari_data.bin"
 img_URLS = []
+
+judete_ascii = [
+    "Alba", "Arad", "Arges", "Bacau", "Bihor", "Bistrita-Nasaud", "Botosani",
+    "Brasov", "Braila", "Buzau", "Caras-Severin", "Calarasi", "Cluj", "Constanta",
+    "Covasna", "Dambovita", "Dolj", "Galati", "Giurgiu", "Gorj", "Harghita",
+    "Hunedoara", "Ialomita", "Iasi", "Ilfov", "Maramures", "Mehedinti", "Mures",
+    "Neamt", "Olt", "Prahova", "Satu Mare", "Salaj", "Sibiu", "Suceava",
+    "Teleorman", "Timis", "Tulcea", "Vaslui", "Valcea", "Vrancea", "Bucuresti"
+]
+county_pattern = r"\b("+ "|".join(re.escape(c) for c in judete_ascii) + r")\s+([A-Z])"
+
+counties_pattern = "|".join(re.escape(c) for c in judete_ascii)
+pattern = rf"\b(?!{counties_pattern}\b)([A-Za-z]+)\s+(?!{counties_pattern}\b)([A-Z][a-z]+)"
 # https://www.meteoromania.ro/wp-content/plugins/meteo/json/imagini-radar.php
 # pentru imagini radar
 # https://maps.meteoromania.ro/hottest/7/72/46.png pentru harta
 
 def rgb888_to_rgb565(r, g, b):
     return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
+
+
+def clean_text(text):
+    # Step 1: Replace sequences of 2+ spaces with a single space
+    text = re.sub(r'\s{2,}', ' ', text)
+    
+    # Step 2: Insert newline between lowercase → Uppercase
+    text = re.sub(r'([a-z0-9])([A-Z])', r'\1\n\2', text)
+    
+    text = re.sub(county_pattern, r"\1\n\2", text)
+    
+    # text = re.sub(pattern, r"\1\n\2", text)
+
+    text = text.strip()
+    # Step 3: Insert newline between digit → Uppercase
+
+    # Step 4: Strip leading/trailing spaces
+
+    return text
 
 def romanian_to_ascii(text):
     replacements = {
@@ -88,14 +121,24 @@ def fetch_image_avertizari(image_url):
 def fetch_text_avertizari(soup, fara_avertizari = False):
     avertizari_text = {}
     if not fara_avertizari:
-        tds = soup.find_all('td', {'colspan': '3', 'style': 'text-align:justify'})
+        tds = soup.find_all("td", style=lambda s: s and "text-align:justify" in s)
+       
         i = 0
         for td in tds:
-            text = td.get_text(separator="\n", strip=True)
-            ascii_text = romanian_to_ascii(text)
-            lines = ascii_text.split('\n')
+            center_ps = td.find_all("p", attrs={"align": "center"})
+            lines = []
+            for p in center_ps:
+                text = p.get_text(strip = True)
+                ascii_text = romanian_to_ascii(text)
+                ascii_text = clean_text(ascii_text)
+                temp_lines = ascii_text.split('\n')
+                for line in temp_lines:
+                    lines.append(line)
+            # print(lines)
+            # print()
             important_text_coming = False
             for line in lines:
+                # print(line)
                 if important_text_coming:
                     avertizari_text.setdefault(i, "")
                     avertizari_text[i] += line + "\n"
@@ -104,11 +147,13 @@ def fetch_text_avertizari(soup, fara_avertizari = False):
                 if "COD" in line or "Interval de valabilitate" in line or "Fenomene vizate" in line:
                     avertizari_text.setdefault(i, "")
                     avertizari_text[i] += line + "\n"
+
                 if "Zone afectate" in line:
                     important_text_coming = True
             i += 1
     else:
         avertizari_text.setdefault(0, "Fara avertizari")
+
     return (len(avertizari_text), avertizari_text)
 
 
@@ -147,7 +192,7 @@ def fetch_and_write_avertizari():
             for pixel in pixels:
                 f.write(struct.pack(">H", pixel))
                 
-fetch_and_write_avertizari()
+# fetch_and_write_avertizari()
 if __name__ == "__main__":
     fetch_and_write_avertizari()
     app.run(debug=True)
