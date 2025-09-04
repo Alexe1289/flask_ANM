@@ -11,6 +11,8 @@ app = Flask(__name__)
 url_avertizari = "https://www.meteoromania.ro/avertizari/"
 AVERTIZARI_FILE = "avertizari_data.bin"
 img_URLS = []
+TARGET_WIDTH = 320
+TARGET_HEIGHT = 240
 
 judete_ascii = [
     "Alba", "Arad", "Arges", "Bacau", "Bihor", "Bistrita-Nasaud", "Botosani",
@@ -50,6 +52,20 @@ def clean_text(text):
 
     return text
 
+def resize_to_fit(img, target_width=TARGET_WIDTH, target_height=TARGET_HEIGHT):
+    # Resize the image to fit inside the target resolution while keeping aspect ratio
+    img.thumbnail((target_width, target_height), Image.LANCZOS)
+
+    # Create a blank (black) canvas of the target size
+    new_img = Image.new("RGB", (target_width, target_height), (0, 0, 0))
+    
+    # Paste the resized image centered
+    x_offset = (target_width - img.width) // 2
+    y_offset = (target_height - img.height) // 2
+    new_img.paste(img, (x_offset, y_offset))
+
+    return new_img
+
 def romanian_to_ascii(text):
     replacements = {
         'ă': 'a', 'â': 'a', 'î': 'i',
@@ -58,6 +74,9 @@ def romanian_to_ascii(text):
         'Ă': 'A', 'Â': 'A', 'Î': 'I',
         'Ș': 'S', 'Ş': 'S',
         'Ț': 'T', 'Ţ': 'T',
+        '–': '-',  # en dash
+        '—': '-',  # em dash
+        '-': '-', 
     }
     return ''.join(replacements.get(c, c) for c in text)
 
@@ -105,6 +124,7 @@ def fetch_image_avertizari(image_url):
         return "NO IMAGE"
     png_bytes = cairosvg.svg2png(bytestring=response.content)
     img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+    img = resize_to_fit(img, 315, 224)
     pixels = img.load()
     width, height = img.size
     print(f"width: {width}, height : {height}")
@@ -185,6 +205,7 @@ def fetch_and_write_avertizari():
         f.write(struct.pack(">B", nr_avert))
         for i in range(nr_avert):
             f.write(struct.pack(">I", len(avertizari_txt[i])))
+            print(len(avertizari_txt[i]))
             f.write(avertizari_txt[i].encode("ascii", errors="replace"))
             width, height, pixels = fetch_image_avertizari(img_URLS[i])
             f.write(struct.pack(">H", width))
