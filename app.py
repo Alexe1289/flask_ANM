@@ -124,7 +124,7 @@ def fetch_image_avertizari(image_url):
         return "NO IMAGE"
     png_bytes = cairosvg.svg2png(bytestring=response.content)
     img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
-    img = resize_to_fit(img, 315, 224)
+    img = resize_to_fit(img, 120, 120)
     pixels = img.load()
     width, height = img.size
     print(f"width: {width}, height : {height}")
