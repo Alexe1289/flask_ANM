@@ -124,7 +124,7 @@ def fetch_image_avertizari(image_url):
         return "NO IMAGE"
     png_bytes = cairosvg.svg2png(bytestring=response.content)
     img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
-    img = resize_to_fit(img, 120, 120)
+    img = resize_to_fit(img, 315, 224)
     pixels = img.load()
     width, height = img.size
     print(f"width: {width}, height : {height}")
@@ -187,11 +187,13 @@ def fetch_and_write_avertizari():
     fara_avertizari = False
     tags = soup.find_all("div", class_="meteo_mapavertiz")
     if not tags:
-        tags = soup.find("div", class_="avertizari")
+        tags = soup.find_all("div", class_="avertizari")
         fara_avertizari = True
     for tag in tags:
         if tag:
+            print(tags)
             img = tag.find("img")
+            print(img)
             if img and img.has_attr("src"):
                 image_url = img["src"]
                 if "https" not in image_url:
