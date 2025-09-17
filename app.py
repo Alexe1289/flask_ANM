@@ -127,7 +127,7 @@ def fetch_image_avertizari(image_url):
     img = resize_to_fit(img, 315, 224)
     pixels = img.load()
     width, height = img.size
-    print(f"width: {width}, height : {height}")
+    # print(f"width: {width}, height : {height}")
     pixels_565 = []
 
     for y in range(height):
@@ -166,7 +166,13 @@ def fetch_text_avertizari(soup, fara_avertizari = False):
                     continue
                 if "COD" in line or "Interval de valabilitate" in line or "Fenomene vizate" in line:
                     avertizari_text.setdefault(i, "")
-                    avertizari_text[i] += line + "\n"
+                    if "COD" in line and "Interval de valabilitate" in line:
+                        # print(line)
+                        parts = line.split("Interval", 1)
+                        result = parts[0].strip() + "\nInterval" + parts[1]
+                        avertizari_text[i] += result + "\n" 
+                    else:
+                        avertizari_text[i] += line + "\n"
 
                 if "Zone afectate" in line:
                     important_text_coming = True
@@ -191,9 +197,7 @@ def fetch_and_write_avertizari():
         fara_avertizari = True
     for tag in tags:
         if tag:
-            print(tags)
             img = tag.find("img")
-            print(img)
             if img and img.has_attr("src"):
                 image_url = img["src"]
                 if "https" not in image_url:
@@ -207,7 +211,7 @@ def fetch_and_write_avertizari():
         f.write(struct.pack(">B", nr_avert))
         for i in range(nr_avert):
             f.write(struct.pack(">I", len(avertizari_txt[i])))
-            print(len(avertizari_txt[i]))
+            # print(len(avertizari_txt[i]))
             f.write(avertizari_txt[i].encode("ascii", errors="replace"))
             width, height, pixels = fetch_image_avertizari(img_URLS[i])
             f.write(struct.pack(">H", width))
@@ -215,7 +219,7 @@ def fetch_and_write_avertizari():
             for pixel in pixels:
                 f.write(struct.pack(">H", pixel))
                 
-fetch_and_write_avertizari()
+# fetch_and_write_avertizari()
 if __name__ == "__main__":
     fetch_and_write_avertizari()
     app.run(debug=True)
