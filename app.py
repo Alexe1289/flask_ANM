@@ -159,15 +159,20 @@ def fetch_text_avertizari(soup, fara_avertizari = False):
             important_text_coming = False
             for line in lines:
                 # print(line)
+                # print("SDasadasd")
                 if important_text_coming:
                     avertizari_text.setdefault(i, "")
                     avertizari_text[i] += line + "\n"
                     important_text_coming = False
                     continue
+
                 if "COD" in line or "Interval de valabilitate" in line or "Fenomene vizate" in line:
                     avertizari_text.setdefault(i, "")
-                    if "COD" in line and "Interval de valabilitate" in line:
-                        # print(line)
+                    if "ATENTIONARE METEOROLOGICA" in line:
+                            parts = line.split("COD ", 1)
+                            result = parts[0].strip() + "\nCOD " + parts[1]
+                            avertizari_text[i] += result + "\n"
+                    elif "COD" in line and "Interval de valabilitate" in line:
                         parts = line.split("Interval", 1)
                         result = parts[0].strip() + "\nInterval" + parts[1]
                         avertizari_text[i] += result + "\n" 
@@ -176,6 +181,10 @@ def fetch_text_avertizari(soup, fara_avertizari = False):
 
                 if "Zone afectate" in line:
                     important_text_coming = True
+
+                if "Nota:" in line:
+                    avertizari_text.setdefault(i, "")
+                    avertizari_text[i] += line + "\n"
             i += 1
     else:
         avertizari_text.setdefault(0, "Fara avertizari")
